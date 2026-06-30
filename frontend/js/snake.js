@@ -1,111 +1,136 @@
 class Snake {
     constructor() {
-        // Start in the middle of our grid
         this.body = [
             { x: 10, y: 10 },
             { x: 9, y: 10 },
             { x: 8, y: 10 }
         ];
         
-        // Load the snake head texture asset
-        this.headImage = new Image();
-
-        this.headImage.onerror = () => {
-            console.log("Snake head texture asset offline, using vector fallback engine.");
-        };
-        // You can drop any clean transparent PNG snake head here later!
-        this.headImage.src = 'https://i.imgur.com/w9YOLvF.png'; 
     }
 
-    // Moves the snake by appending the new head position and dropping the tail edge
     move(newHeadPos) {
-        this.body.unshift(newHeadPos);
-        this.body.pop();
+        this.body.unshift(newHeadPos); 
+        this.body.pop(); 
+            
+                 
     }
 
-    // Traditional growth on food consumption
     grow() {
-        // Duplicate the last tail coordinate to expand safely on next frame move
-        const tailEnd = { ...this.body[this.body.length - 1] };
-        this.body.push(tailEnd);
+        const tailEnd = this.body[this.body.length - 1];
+        this.body.push({ x: tailEnd.x, y: tailEnd.y });
     }
 
-    // CUSTOM MECHANIC: Eated 4 foods in 25s reward -> Shrink Tail safely
     shrinkTail() {
-        if (this.body.length > 3) { // Maintain a viable minimum length
+        if (this.body.length > 3) {
             this.body.pop();
-            this.body.pop(); // Remove two segments as an efficient agility reward!
+            console.log("Pacing window met: Snake tail length reduced.");
+        }
+        else {
+            console.log("Snake is at minimum length; cannot shrink further.");
         }
     }
 
-    // CUSTOM MECHANIC: Failed to eat enough food penalty -> Length grows automatically
     growTailPenalty() {
-        for (let i = 0; i < 2; i++) {
-            const tailEnd = { ...this.body[this.body.length - 1] };
-            this.body.push(tailEnd);
-        }
+        const tailEnd = this.body[this.body.length - 1];
+        this.body.push({ x: tailEnd.x, y: tailEnd.y });
+        console.log("Pacing window failed: Snake tail length expanded.");
     }
 
     checkSelfCollision(headPos) {
-        // Check if head coordinate matches any active tail segments
-        for (let i = 1; i < this.body.length; i++) {
-            if (this.body[i].x === headPos.x && this.body[i].y === headPos.y) {
-                return true;
-            }
-        }
-        return false;
+        return this.body.some(segment => segment.x === headPos.x && segment.y === headPos.y);
     }
 
     draw(ctx, gridSize) {
-        // --- DRAW BODY SEGMENTS WITH ARCADE GLOW ---
-        ctx.save();
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = "#00ffcc"; // Cyan neon trail glow
-        ctx.fillStyle = "rgba(0, 255, 204, 0.8)";
+        this.body.forEach((segment, index) => {
+            if (index === 0) {
+                // --- DESIGNING A REAL SNAKE HEAD WITH THE CROWN ---
+                const hX = segment.x * gridSize + gridSize / 2;
+                const hY = segment.y * gridSize + gridSize / 2;
+                const r = gridSize / 2;
 
-        for (let i = 1; i < this.body.length; i++) {
-            ctx.beginPath();
-            // Draw smooth circular body cells instead of rigid square blocks
-            ctx.arc(
-                this.body[i].x * gridSize + gridSize / 2,
-                this.body[i].y * gridSize + gridSize / 2,
-                gridSize / 2 - 2,
-                0,
-                2 * Math.PI
-            );
-            ctx.fill();
-        }
-        ctx.restore();
+                // Determine rotation angle based on current movement direction
+                let angle = 0;
+                if (typeof currentDirection !== 'undefined') {
+                    if (currentDirection.x === 1) angle = 0;          // Right
+                    if (currentDirection.x === -1) angle = Math.PI;    // Left
+                    if (currentDirection.y === 1) angle = Math.PI / 2; // Down
+                    if (currentDirection.y === -1) angle = -Math.PI / 2;// Up
+                }
 
-        // --- DRAW HEAD SPRITE WITH DIRECTIONAL ROTATION ---
-        const head = this.body[0];
-        ctx.save();
-        
-        // Translate center matrix canvas origin directly onto the head tile
-        ctx.translate(head.x * gridSize + gridSize / 2, head.y * gridSize + gridSize / 2);
-        
-        // Compute correct angle based on global directional vector offsets
-        let angle = 0;
-        if (currentDirection.x === 1) angle = 0;           // Facing Right
-        if (currentDirection.x === -1) angle = Math.PI;     // Facing Left
-        if (currentDirection.y === 1) angle = Math.PI / 2;  // Facing Down
-        if (currentDirection.y === -1) angle = -Math.PI / 2;// Facing Up
-        ctx.rotate(angle);
+                ctx.save();
+                ctx.translate(hX, hY);
+                ctx.rotate(angle);
 
-        // If the custom asset image fails to load, fallback gracefully to a sleek geometric indicator
-        if (this.headImage.complete && this.headImage.naturalWidth !== 0) {
-            ctx.drawImage(this.headImage, -gridSize / 2, -gridSize / 2, gridSize, gridSize);
-        } else {
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = "#00ffcc";
-            ctx.fillStyle = "#ffffff";
-            ctx.beginPath();
-            ctx.arc(0, 0, gridSize / 2, 0, 2 * Math.PI);
-            ctx.fill();
-            // Draw a subtle nose/indicator point direction marker
-            ctx.fillStyle = "#00ffcc";
-            ctx.fillRect(gridSize / 4, -4, 6, 8);
-        }
-        ctx.restore();
+                // 1. Draw the Little Red Flicking Tongue
+                ctx.strokeStyle = "#e74c3c";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(r, 0);
+                ctx.lineTo(r + 6, 0); 
+                ctx.moveTo(r + 6, 0);
+                ctx.lineTo(r + 9, -3); 
+                ctx.moveTo(r + 6, 0);
+                ctx.lineTo(r + 9, 3);  
+                ctx.stroke();
+
+                // 2. Draw Main Head Base (Sleek Reptile Oval)
+                ctx.fillStyle = "#2ecc71"; 
+                ctx.beginPath();
+                ctx.ellipse(0, 0, r * 1.1, r * 0.9, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // 3. Draw Piercing Reptile Eyes (Left & Right)
+                ctx.fillStyle = "#f1c40f"; // Golden Eyes
+                ctx.beginPath();
+                ctx.arc(r * 0.2, -r * 0.4, 2.5, 0, 2 * Math.PI); 
+                ctx.arc(r * 0.2, r * 0.4, 2.5, 0, 2 * Math.PI);  
+                ctx.fill();
+
+                // Slit Pupils
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(r * 0.2, -r * 0.4 - 1.5, 0.8, 3);
+                ctx.fillRect(r * 0.2, r * 0.4 - 1.5, 0.8, 3);
+
+                // 4. DRAW THE ROYAL CROWN ON TOP
+                // We un-rotate the canvas context briefly so the crown always stays right-side up!
+                ctx.rotate(-angle);
+                ctx.font = `${gridSize - 4}px serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                // Shifted slightly upward (-6) so it sits proudly on the snake's head
+                ctx.fillText("👑", 0, -6);
+
+                ctx.restore();
+            } else {
+                // --- TAPERED SERPENT BODY ---
+                ctx.fillStyle = "#2ecc71"; 
+                
+                const totalSegments = this.body.length;
+                const tailFactor = (totalSegments - index) / totalSegments;
+                const currentBlockSize = gridSize * (0.75 + 0.25 * tailFactor); 
+                
+                const offset = (gridSize - currentBlockSize) / 2;
+                const xPos = segment.x * gridSize + offset;
+                const yPos = segment.y * gridSize + offset;
+                const radius = currentBlockSize / 3; 
+
+                ctx.beginPath();
+                ctx.moveTo(xPos + radius, yPos);
+                ctx.lineTo(xPos + currentBlockSize - radius, yPos);
+                ctx.quadraticCurveTo(xPos + currentBlockSize, yPos, xPos + currentBlockSize, yPos + radius);
+                ctx.lineTo(xPos + currentBlockSize, yPos + currentBlockSize - radius);
+                ctx.quadraticCurveTo(xPos + currentBlockSize, yPos + currentBlockSize - radius, xPos + currentBlockSize - radius, yPos + currentBlockSize);
+                ctx.lineTo(xPos + radius, yPos + currentBlockSize);
+                ctx.quadraticCurveTo(xPos, yPos + currentBlockSize, xPos, yPos + currentBlockSize - radius);
+                ctx.lineTo(xPos, yPos + radius);
+                ctx.quadraticCurveTo(xPos, yPos, xPos + radius, yPos);
+                ctx.closePath();
+                ctx.fill();
+
+                // Inner Scale Detail
+                ctx.fillStyle = "#27ae60"; 
+                ctx.fillRect(xPos + currentBlockSize/3, yPos + currentBlockSize/3, currentBlockSize/3, currentBlockSize/3);
+            }
+        });
     }
 }
