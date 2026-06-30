@@ -9,6 +9,10 @@ class Snake {
         
         // Load the snake head texture asset
         this.headImage = new Image();
+
+        this.headImage.onerror = () => {
+            console.log("Snake head texture asset offline, using vector fallback engine.");
+        };
         // You can drop any clean transparent PNG snake head here later!
         this.headImage.src = 'https://i.imgur.com/w9YOLvF.png'; 
     }
