@@ -75,10 +75,43 @@ function checkMineCollision(headPos) {
 }
 
 function drawFood(ctx, gridSize) {
-    ctx.font = `${gridSize - 2}px serif`;
+    // Explicit sizing for high pixel densities
+    ctx.font = `bold ${gridSize - 2}px Arial, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("🍎", window.food.x * gridSize + gridSize / 2, window.food.y * gridSize + gridSize / 2);
+
+    let foodEmoji = "🍎";
+    const selection = window.gameConfig.foodType || 'apple';
+    if (selection === 'pizza') foodEmoji = "🍕";
+    if (selection === 'star') foodEmoji = "⭐";
+
+    ctx.fillText(foodEmoji, window.food.x * gridSize + gridSize / 2, window.food.y * gridSize + gridSize / 2);
+}
+
+// Inside your drawMines handler function
+function drawMines(ctx, gridSize) {
+    if (!window.mines) return;
+    
+    window.mines.forEach(mine => {
+        const mX = mine.x * gridSize + gridSize / 2;
+        const mY = mine.y * gridSize + gridSize / 2;
+        
+        ctx.save();
+        // Force high contrast dark outline around tactical assets in light mode
+        const isLight = document.body.classList.contains('light-theme');
+        
+        ctx.font = `${gridSize - 4}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        
+        if (isLight) {
+            ctx.shadowColor = "rgba(0,0,0,0.4)";
+            ctx.shadowBlur = 4;
+        }
+        
+        ctx.fillText("💥", mX, mY);
+        ctx.restore();
+    });
 }
 
 function drawMines(ctx, gridSize) {

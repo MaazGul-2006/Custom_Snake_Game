@@ -3,31 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Tactical Snake</title>
+    <title>Custom Tactical Sandbox</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <div id="game-container">
-        <h2>Tactical Snake Sandbox</h2>
-        <div id="scoreboard">
-            <div>Score: <span id="score-val">0</span></div>
-            <div>Food Timer: <span id="food-timer-val">10</span>s</div>
-            <div>Rush Window (25s): <span id="rush-timer-val">25</span>s</div>
-            <div>Food Eaten: <span id="rush-count-val">0</span>/4</div>
+<body class="dark-theme"> <div id="game-container">
+        <div id="start-menu">
+            <h2>Tactical Core Configuration</h2>
+            <div class="menu-grid">
+                <div class="setting-option">
+                    <label for="animal-select">Select Bio-Avatar:</label>
+                    <select id="animal-select">
+                        <option value="snake">Royal King Snake (🐍)</option>
+                        <option value="caterpillar">Neon Caterpillar (🐛)</option>
+                        <option value="dragon">Mecha Dragon (🐲)</option>
+                    </select>
+                </div>
+
+                <div class="setting-option">
+                    <label for="food-select">Select Payload/Food:</label>
+                    <select id="food-select">
+                        <option value="apple">Apple (🍎)</option>
+                        <option value="pizza">Energy Pizza (🍕)</option>
+                        <option value="star">Star Node (⭐)</option>
+                    </select>
+                </div>
+
+                <div class="setting-option">
+                    <label for="level-select">Select Mission Level:</label>
+                    <select id="level-select">
+                        <option value="1">Level 1: Proximity Sandbox</option>
+                        <option value="2">Level 2: Concrete Maze (Locked)</option>
+                        <option value="3">Level 3: Multi-Agent Blitz (Locked)</option>
+                    </select>
+                </div>
+
+                <div class="setting-option">
+                    <label for="wall-select">Boundary Physics:</label>
+                    <select id="wall-select">
+                        <option value="solid">Hard Walls (Instant Crash)</option>
+                        <option value="wrap">Quantum Wrap (Opposite Screen Entry)</option>
+                    </select>
+                </div>
+
+                <div class="setting-option">
+                    <label for="color-select">Body Primary Color:</label>
+                    <select id="color-select">
+                        <option value="#2ecc71">Emerald Green</option>
+                        <option value="#3498db">Neon Cyber Blue</option>
+                        <option value="#e74c3c">Crimson Flare Red</option>
+                    </select>
+                </div>
+
+                <div class="setting-option">
+                    <label for="theme-select">Visual Display Interface:</label>
+                    <select id="theme-select">
+                        <option value="dark">Dark Tactical Mode</option>
+                        <option value="light">Light High-Contrast Mode</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="launch-btn" onclick="launchConfiguredGame()">Launch Mission</button>
         </div>
-        
-        <!-- The 2D Grid render window -->
-        <canvas id="gameCanvas" width="400" height="400"></canvas>
-        
-        <div id="instructions">
-            <p>Use Arrow Keys to steer. Eat 4 foods within 25s to shrink your tail!</p>
+
+        <div id="sandbox-core" class="hidden">
+            <h2>Tactical Sandbox Engine</h2>
+            <div id="scoreboard">
+                <div>Score: <span id="score-val">0</span></div>
+                <div>Food Timer: <span id="food-timer-val">10</span>s</div>
+                <div>Rush Window (25s): <span id="rush-timer-val">25</span>s</div>
+                <div>Food Eaten: <span id="rush-count-val">0</span>/4</div>
+            </div>
+            
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+            
+            <div id="instructions">
+                <p>Use Arrow Keys to steer. Hit ESC to return to Configuration Menu.</p>
+            </div>
         </div>
     </div>
 
-    <!-- Script loading chain -->
     <script src="js/analytics.js"></script>
-    <script src="js/snake.js"></script>   
-    <script src="js/game.js"></script>    
-    <script src="js/objects.js"></script> 
+    <script src="js/snake.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/objects.js"></script>
 </body>
 </html>

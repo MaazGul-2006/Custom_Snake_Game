@@ -29,6 +29,21 @@ let nextDirection = { x: 1, y: 0 };
 let currentDirection = { x: 1, y: 0 };
 
 function initGame() {
+    // Sharp Rendering Engine Fix for Blurry Displays
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 400 * dpr;
+    canvas.height = 400 * dpr;
+    ctx.scale(dpr, dpr);
+    
+    // Set explicit CSS sizing bounds
+    canvas.style.width = "400px";
+    canvas.style.height = "400px";
+
+    // Re-initialize active avatar properties explicitly from configuration values
+    if (snake) {
+        snake.avatar = window.gameConfig.avatar;
+        snake.color = window.gameConfig.primaryColor;
+    }
     snake = new Snake(); 
     score = 0;
     foodEatenInWindow = 0;
@@ -105,14 +120,24 @@ function evaluateRushPerformance() {
 function update() {
     currentDirection = nextDirection;
     
-    const newHeadPos = {
-        x: snake.body[0].x + currentDirection.x,
-        y: snake.body[0].y + currentDirection.y
-    };
+    let newX = snake.body[0].x + currentDirection.x;
+    let newY = snake.body[0].y + currentDirection.y;
 
-    if (newHeadPos.x < 0 || newHeadPos.x >= TILE_COUNT || newHeadPos.y < 0 || newHeadPos.y >= TILE_COUNT) {
-        return gameOver('wall');
+    // BOUNDARY PHYSICS HANDLER
+    if (window.gameConfig.wallRule === "wrap") {
+        // Quantum Wrap Mode: Teleport to opposite side
+        if (newX < 0) newX = TILE_COUNT - 1;
+        if (newX >= TILE_COUNT) newX = 0;
+        if (newY < 0) newY = TILE_COUNT - 1;
+        if (newY >= TILE_COUNT) newY = 0;
+    } else {
+        // Hard Walls Mode: Instant Crash
+        if (newX < 0 || newX >= TILE_COUNT || newY < 0 || newY >= TILE_COUNT) {
+            return gameOver('wall');
+        }
     }
+
+    const newHeadPos = { x: newX, y: newY };
 
     if (snake.checkSelfCollision(newHeadPos)) return gameOver('self');
     if (checkMineCollision(newHeadPos)) return gameOver('mine');
@@ -135,9 +160,14 @@ function update() {
 }
 
 function render() {
-    ctx.fillStyle = "#0d0d0f";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const computedStyles = getComputedStyle(document.body);
+    const canvasBgColor = computedStyles.getPropertyValue('--bg-canvas').trim() || '#0b0d17';
 
+    // Clear the board using the correct dimensions
+    ctx.fillStyle = canvasBgColor;
+    ctx.fillRect(0, 0, 400, 400);
+
+    // Render game objects cleanly
     snake.draw(ctx, GRID_SIZE);
     drawFood(ctx, GRID_SIZE);
     drawMines(ctx, GRID_SIZE);
@@ -151,15 +181,15 @@ function gameOver(deathReason) {
     
     sendMatchTelemetry(deathReason); 
     
-    let playerName = prompt(`Game Over due to hitting a ${deathReason}! Final Score: ${score}\nEnter your name for the leaderboard:`);
-    if (playerName && playerName.trim() !== "") {
-        postHighScoreToLeaderboard(playerName, score);
-    }
+    alert(`Game Over due to hitting a ${deathReason}! Final Score: ${score}`);
     
+    // Reset inputs
     nextDirection = { x: 1, y: 0 };
     currentDirection = { x: 1, y: 0 };
     
-    initGame();
+    // Toggle interface back to menu configuration card 
+    document.getElementById("sandbox-core").classList.add("hidden");
+    document.getElementById("start-menu").classList.remove("hidden");
 }
 
 window.addEventListener("keydown", e => {
@@ -183,6 +213,51 @@ window.addEventListener("keydown", e => {
     }
 });
 
-window.onload = () => {
-    initGame();
+// Global Configuration Objects used across scripts
+window.gameConfig = {
+    avatar: 'snake',
+    foodType: 'apple',
+    level: '1',
+    wallRule: 'solid',
+    primaryColor: '#2ecc71'
 };
+
+// Fired when clicking the green "Launch Mission" button
+function launchConfiguredGame() {
+    // 1. Gather all selections from the menu dropdowns
+    window.gameConfig.avatar = document.getElementById("animal-select").value;
+    window.gameConfig.foodType = document.getElementById("food-select").value;
+    window.gameConfig.level = document.getElementById("level-select").value;
+    window.gameConfig.wallRule = document.getElementById("wall-select").value;
+    window.gameConfig.primaryColor = document.getElementById("color-select").value;
+
+    // 2. Handle Theme Switcher UI classes dynamically
+    const selectedTheme = document.getElementById("theme-select").value;
+    if (selectedTheme === 'light') {
+        document.body.classList.remove('dark-theme');
+        document.body.classList.add('light-theme');
+    } else {
+        document.body.classList.remove('light-theme');
+        document.body.classList.add('dark-theme');
+    }
+
+    // 3. Toggle visibility layers (Hide menu card, display canvas arena)
+    document.getElementById("start-menu").classList.add("hidden");
+    document.getElementById("sandbox-core").classList.remove("hidden");
+
+    // 4. Fire up the actual engines!
+    initGame();
+}
+
+// Esc Key Listener to exit back to Configuration Panel smoothly during a run
+window.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+        clearInterval(gameLoopInterval);
+        clearInterval(foodInterval);
+        clearInterval(rushInterval);
+        clearInterval(mineShiftInterval);
+        
+        document.getElementById("sandbox-core").classList.add("hidden");
+        document.getElementById("start-menu").classList.remove("hidden");
+    }
+});
